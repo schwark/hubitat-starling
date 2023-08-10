@@ -125,21 +125,37 @@ def makeChildDeviceId(name, type) {
     return "STARLING-${type.toUpperCase()}-${name}"
 }
 
+def doorbellPushed(cd, json) {
+    if(cd) {
+        log.info("[Starling Hub] Doorbell was activated")
+        cd.sendEvent(name: 'pushed', value: 1)
+    }
+}
+
+def faceSeen(cd, cam, name) {
+    if(cd) {
+        log.info("[Starling Hub] Doorbell saw ${name} at ${cam}")
+        def lastSeen = cd.getDataValue('lastSeen')
+        if(!lastSeen || now() - lastSeen > 20*1000) {
+            cd.updateDataValue('lastSeen', now())
+            cd.updateDataValue('seenAt', cam)
+            cd.sendEvent(name: 'pushed', value: 1)
+        }
+    }
+}
+
 def processDeviceStatus(json) {
     //debug(json, "processDeviceStatus()")
     def id = json?.properties?.id
     def cd = getChildDevice(makeChildDeviceId(id, 'bell'))
-    if(cd && json.properties?.doorbellPushed) cd.sendEvent(name: 'pushed', value: 1)
+    if(json.properties?.doorbellPushed) doorbellPushed(cd, json)
 
     for(i in 1..numFaces) {
         def nameId = settings["face${i}"]
         def name = state.faces[nameId]
         if(json.properties?."faceDetected:${name}") {
             cd = getChildDevice(makeChildDeviceId(nameId, 'face'))
-            if(cd) {
-                cd.updateDataValue(name: 'seenAt', value: json?.properties?.name)
-                cd.sendEvent(name: 'pushed', value: 1)
-            }
+            faceSeen(cd, json?.properties?.name, name)
         }
     }
 }
@@ -152,7 +168,7 @@ def processDeviceData(json) {
     if(isDoorbell) {
         debug("bell event ${id} with value ${doorbell}")
         cd = createChildDevice(json.properties.name, id, 'bell')
-        if(cd && json.properties.doorbellPushed) cd.sendEvent(name: 'pushed', value: 1)
+        if(json.properties?.doorbellPushed) doorbellPushed(cd, json)
     }
     json?.properties?.each() { k, v ->
         if(k.startsWith('faceDetected:')) {
@@ -163,10 +179,7 @@ def processDeviceData(json) {
             state.faces[nameId] = name
             if(v) then {
                 def cd = getChildDevice(makeChildDeviceId(nameId, 'face'))
-                if(cd) {
-                    cd.updateDataValue(name: 'seenAt', value: json?.properties?.name)
-                    cd.sendEvent(name: 'pushed', value: 1)
-                }
+                faceSeen(cd, json?.properties?.name, name)
             }
         } 
     }
@@ -230,7 +243,7 @@ private createChildDevice(label, id, type) {
             addChildDevice("hubitat", component, deviceId, [label : "${label}", isComponent: false, name: "${name}"])
             createdDevice = getChildDevice(deviceId)
             def created = createdDevice ? "created" : "failed creation"
-            log.info("Hubitat Starling Button: id: ${deviceId} label: ${label} ${created}")
+            log.info("[Starling Hub] id: ${deviceId} label: ${label} ${created}")
         } catch (e) {
             logError("Failed to add child device with error: ${e}", "createChildDevice()")
         }
