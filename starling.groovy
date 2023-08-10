@@ -29,7 +29,6 @@ preferences {
     page(name: "configPage")
 }
 
-
 def md5(String s){
     MessageDigest.getInstance("MD5").digest(s.bytes).encodeHex().toString()
 }
@@ -48,7 +47,9 @@ def mainPage(){
     dynamicPage(name:"mainPage",install:true, uninstall:true){
         section {
             input "debugMode", "bool", title: "Enable debugging", defaultValue: true
-            input "secure", "bool", title: "Enable HTTPS", defaultValue: true
+            input "secure", "bool", title: "Enable HTTPS", defaultValue: false
+            input "httpPort", "text", title: "HTTP Port", defaultValue: 3080
+            input "httpsPort", "text", title: "HTTPS Port", defaultValue: 3443
             input("numFaces", "number", title: getFormat("section", "How many faces to create buttons for?:"), defaultValue: 0, submitOnChange: true, range: "0..25")
         }
         section(getFormat("header", "Step 1: Configure your hub")) {
@@ -69,7 +70,7 @@ def configPage(){
         if(numFaces){
             for(i in 1..numFaces){
                 section(getFormat("header", "Face ${i}")){
-                    input("face${i}", "enum", title: getFormat("section", "Face:"), options: state.faces)
+                    input("face${i}", "enum", title: getFormat("section", "Face:"), submitOnChange: true, options: state.faces)
                 }
             }
         }
@@ -78,6 +79,8 @@ def configPage(){
 
 def installed() {
     initialize()
+    unschedule()
+    schedule('*/5 * * ? * *', refresh)    
 }
 
 def updated() {
@@ -93,12 +96,10 @@ def updated() {
     }
     getDevices()
     pauseExecution(1000)
-    refresh()
+    getDeviceDetails()
 }
 
 def initialize() {
-    unschedule()
-    schedule('*/5 * * ? * *', refresh)
 }
 
 def uninstalled() {
@@ -113,9 +114,10 @@ def uninstalled() {
 def processDevices(json) {
     debug(json, "processDevices()")
     def types = ['cam']
+    state.devices = [:]
     json?.devices?.each() {
         if(!types.contains(it.type)) return
-        createChildDevice(it.name, it.id, 'bell')
+        state.devices[it.id] = it.name
     }
 }
 
@@ -123,15 +125,34 @@ def makeChildDeviceId(name, type) {
     return "STARLING-${type.toUpperCase()}-${name}"
 }
 
+def processDeviceStatus(json) {
+    //debug(json, "processDeviceStatus()")
+    def id = json?.properties?.id
+    def cd = getChildDevice(makeChildDeviceId(id, 'bell'))
+    if(cd && json.properties?.doorbellPushed) cd.sendEvent(name: 'pushed', value: 1)
+
+    for(i in 1..numFaces) {
+        def nameId = settings["face${i}"]
+        def name = state.faces[nameId]
+        if(json.properties?."faceDetected:${name}") {
+            cd = getChildDevice(makeChildDeviceId(nameId, 'face'))
+            if(cd) {
+                cd.updateDataValue(name: 'seenAt', value: json?.properties?.name)
+                cd.sendEvent(name: 'pushed', value: 1)
+            }
+        }
+    }
+}
+
 def processDeviceData(json) {
     debug(json, "processDeviceData()")
     def facenum = 1
     def id = json?.properties?.id
-    def doorbell = json?.properties?.doorbellPushed
-    if(doorbell) {
+    def isDoorbell = json?.properties?.containsKey('doorbellPushed')
+    if(isDoorbell) {
         debug("bell event ${id} with value ${doorbell}")
-        def cd = getChildDevice(makeChildDeviceId(id, 'bell'))
-        if(cd) cd.sendEvent(name: 'pushed', value: 1)
+        cd = createChildDevice(json.properties.name, id, 'bell')
+        if(cd && json.properties.doorbellPushed) cd.sendEvent(name: 'pushed', value: 1)
     }
     json?.properties?.each() { k, v ->
         if(k.startsWith('faceDetected:')) {
@@ -152,18 +173,19 @@ def processDeviceData(json) {
 }
 
 def getDeviceDetails() {
-    def children = getAllChildDevices()
-    children?.each() {
-        def idparts = it.deviceNetworkId.split("-")
-        def type = idparts[1].toLowerCase()
-        def id = idparts[-1]
-        if(type != 'face') getDeviceData(id)
+    state.devices?.each() { k, v ->
+        getDeviceData(k)
+    }
+}
+
+def getDeviceStatuses() {
+    state.devices?.each() { k, v ->
+        getDeviceStatus(k)
     }
 }
 
 def refresh() {
-    getDeviceDetails()
-    pauseExecution(1000)
+    getDeviceStatuses()
 }
 
 def parseResponse(cmd, data) {
@@ -171,24 +193,27 @@ def parseResponse(cmd, data) {
         processDevices(data)
     } else if('details' == cmd) {
         processDeviceData(data)
+    } else if('status' == cmd) {
+        processDeviceStatus(data)
     }
 }
 
 def getBase() {
     def dashIp = ip.replaceAll(/\./,'-')
-    secure ? "https://${dashIp}.local.starling.direct:3443/api/connect/v1" : "http://${ip}:3080/api/connect/v1"
+    secure ? "https://${dashIp}.local.starling.direct:${httpsPort}/api/connect/v1" : "http://${ip}:${httpPort}/api/connect/v1"
 }
 
 def starlingRequest(cmd, params=null) {
     def commands = [
         list: [uri: 'devices'],
-        details: [uri: "devices/${params?.id}"]
+        details: [uri: "devices/${params?.id}"],
+        status: [uri: "devices/${params?.id}"]
     ]
     def headers = [
     ]
     def base = getBase()
     def url = "${base}/${commands[cmd].uri}?key=${key}"
-    debug("${url}")
+    //debug("${cmd} -> ${url}")
 
     httpGet([uri: url], { parseResponse(cmd, it.data) } )
 }
@@ -231,12 +256,16 @@ def getDeviceData(id) {
     starlingRequest('details', [id: id])
 }
 
+def getDeviceStatus(id) {
+    starlingRequest('status', [id: id])
+}
+
 void componentRefresh(cd) {
     debug("received refresh request from ${cd.displayName}")
     def idparts = cd.deviceNetworkId.split("-")
     def type = idparts[1].toLowerCase()
     def id = idparts[-1]
-    if(type != 'face') getDeviceDetails(id)
+    if(type != 'face') getDeviceStatus(id)
 }
 
 def componentPush(cd) {
