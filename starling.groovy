@@ -10,13 +10,13 @@ import hubitat.helper.InterfaceUtils
 import java.security.MessageDigest
 
 def appVersion() { return "4.0" }
-def appName() { return "Starling Hub Support" }
+def appName() { return "Nest Doorbell via Starling Hub" }
 
 definition(
     name: "${appName()}",
     namespace: "schwark",
     author: "Schwark Satyavolu",
-    description: "This adds support for Starling Hub",
+    description: "This adds support for Google Nest Doorbells via Starling Hub",
     category: "Convenience",
     iconUrl: "https://is5-ssl.mzstatic.com/image/thumb/Purple122/v4/8c/69/97/8c699798-a0f2-c5b5-6a8d-4553d7b8babe/AppIcon-1x_U007emarketing-0-7-0-85-220.png/512x512bb.jpg",
     iconX2Url: "https://is5-ssl.mzstatic.com/image/thumb/Purple122/v4/8c/69/97/8c699798-a0f2-c5b5-6a8d-4553d7b8babe/AppIcon-1x_U007emarketing-0-7-0-85-220.png/512x512bb.jpg",

@@ -1,26 +1,24 @@
-# Sonos Favorites Support for Hubitat
+# Google Nest Doorbell via Starling Hub for Hubitat
 
-This is an integration for Hubitat hubs to enable playing of Sonos favorites via a Switch for automation purposes. This app only lets you play from favorites, but allows you to play radio stations, playlists from Apple Music or Spotify etc. 
-
-The built-in integration only works if you have the URI of the song you want to play, but does not work with URIs of playlists for example. Hence the need for this add-in - just add a song to your Sonos favorites in the Sonos app, and you can play that song/station/playlist anytime via a switch. 
-
-A side benefit is that this add in will also effectively made a Sonos a switch that can be turned on or off (to start or stop music) if a switch is more convenient in automations.
+This is an integration for Hubitat hubs to enable interfacing with Google Nest Doorbells via Starling Hubs. 
 
 To use, go to your Hubitat hub, Go to Developer tools / Apps Code / Add New App and paste and save this file
 
-https://raw.githubusercontent.com/schwark/hubitat-sonos-favorites/main/sonos-favorites.groovy
+https://raw.githubusercontent.com/schwark/hubitat-starling/main/starling.groovy
 
-Go to Apps / Add User App / Sonos Favorites Support
+Go to Apps / Add User App / Nest Doorbell via Starling Hub
 
-Pick the speakers you want to use with this app
+Pick the number of buttons to create for identified faces (one button is created for each face you want to be notified when seen at any of the doorbells in your house). One button will also be created for each doorbell in your house.
 
-Then click on Presets
+Open the Starling app / Developer Connect / Enable HTTP port and create an API Key. Also do the Google connect authorization so your Starling Hub has access to your Google Home devices - this app only has support for doorbells for now.
 
-This will now allow you to pick the number of preset switches you want to create - pick a number up to 25 (only the number you need, you can increase later as necessary)
+Enter the API key, and the IP address of your Starling hub into the preferences page. Then click on Choose Faces - one dropdown should show up for each face you want a button created for - pick the name for each button
 
-Then for each preset, pick which speaker and which favorites from your Sonos favorites - if the station or media you want to play is not in Sonos Favorites, add it to your Sonos favorites.
+A button named ```<Doorbell Name>``` will be created for each doorbell. A push event is generated on this button anytime the doorbell is rung
 
-A switch named ```<Sonos Speaker Name> Fave <Preset Num>``` will be created for each preset. Turning it on will play the selected favorite, and turning off will stop the music.
+A button named ```<Face Name>``` will be created for each identified face selected. A push event is generated on this button anytime the person is seen on ANY of the doorbells in the house
+
+
 
 
 
