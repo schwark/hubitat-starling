@@ -127,7 +127,8 @@ def makeChildDeviceId(name, type) {
 
 def doorbellPushed(cd, json) {
     if(cd) {
-        log.info("[Starling Hub] Doorbell was activated")
+        def name = json?.properties?.name
+        log.info("[Starling Hub] ${name} was rung")
         cd.sendEvent(name: 'pushed', value: 1)
     }
 }
