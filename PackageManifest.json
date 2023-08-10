@@ -1,0 +1,14 @@
+{
+  "author": "Schwark Satyavolu",
+  "apps": [
+    {
+      "id": "4955a674-583d-42a7-b46e-0d52100b0a4c",
+      "name": "${appName()}",
+      "namespace": "schwark",
+      "location": "https://raw.githubusercontent.com/schwark/hubitat-starling/main/starling.groovy",
+      "required": false,
+      "oauth": false,
+      "primary": false
+    }
+  ]
+}
