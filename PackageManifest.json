@@ -6,7 +6,7 @@
       "name": "${appName()}",
       "namespace": "schwark",
       "location": "https://raw.githubusercontent.com/schwark/hubitat-starling/main/starling.groovy",
-      "required": false,
+      "required": true,
       "oauth": false,
       "primary": false
     }
