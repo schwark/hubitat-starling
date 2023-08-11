@@ -136,9 +136,9 @@ def doorbellPushed(cd, json) {
 def faceSeen(cd, cam, name) {
     if(cd) {
         log.info("[Starling Hub] Doorbell saw ${name} at ${cam}")
-        def lastSeen = cd.getDataValue('lastSeen')
+        def lastSeen = cd.getDataValue('lastSeen') as Long
         if(!lastSeen || now() - lastSeen > 20*1000) {
-            cd.updateDataValue('lastSeen', now())
+            cd.updateDataValue('lastSeen', "${now()}")
             cd.updateDataValue('seenAt', cam)
             cd.sendEvent(name: 'pushed', value: 1)
         }
