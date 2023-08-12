@@ -1,9 +1,16 @@
 {
+  "packageName": "Nest Doorbell via Starling Hub",
+	"minimumHEVersion": "2.1.9",
+	"version": "1.0.0",
+	"licenseFile": "",
+	"releaseNotes": "",
   "author": "Schwark Satyavolu",
+	"documentationLink": "https://github.com/schwark/hubitat-starling",
+	"communityLink": "https://community.hubitat.com/t/release-nest-doorbell-support-via-starling-hub/122705",
   "apps": [
     {
       "id": "4955a674-583d-42a7-b46e-0d52100b0a4c",
-      "name": "${appName()}",
+      "name": "Nest Doorbell via Starling Hub",
       "namespace": "schwark",
       "location": "https://raw.githubusercontent.com/schwark/hubitat-starling/main/starling.groovy",
       "required": true,

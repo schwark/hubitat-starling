@@ -4,12 +4,11 @@
  *
  */
 
- def version() {"0.1.1"}
+def version() {"1.0.0"}
 
 import hubitat.helper.InterfaceUtils
 import java.security.MessageDigest
 
-def appVersion() { return "4.0" }
 def appName() { return "Nest Doorbell via Starling Hub" }
 
 definition(
