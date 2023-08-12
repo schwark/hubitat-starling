@@ -4,7 +4,7 @@
  *
  */
 
-def version() {"1.0.0"}
+def version() {"1.0.1"}
 
 import hubitat.helper.InterfaceUtils
 import java.security.MessageDigest
@@ -49,6 +49,7 @@ def mainPage(){
             input "secure", "bool", title: "Enable HTTPS", defaultValue: false
             input "httpPort", "text", title: "HTTP Port", defaultValue: 3080
             input "httpsPort", "text", title: "HTTPS Port", defaultValue: 3443
+            input "facePrefix", "text", title: "Prefix for Faces", defaultValue: "Face "
             input("numFaces", "number", title: getFormat("section", "How many faces to create buttons for?:"), defaultValue: 0, submitOnChange: true, range: "0..25")
         }
         section(getFormat("header", "Step 1: Configure your hub")) {
@@ -90,6 +91,7 @@ def updated() {
         if(id) {
             def name = state.faces[id]
             def nameId = md5(name)
+            name = "${facePrefix}${name}"
             cd = createChildDevice(name, nameId, 'face')
         }
     }
