@@ -1,5 +1,8 @@
 # Google Nest Doorbell via Starling Hub for Hubitat
 
+# How to install
+The easiest way to install and keep up to date is to use [Hubitat Package Manager](https://hubitatpackagemanager.hubitatcommunity.com/installing.html). Search for Starling to install - otherwise follow manual process below
+
 This is an integration for Hubitat hubs to enable interfacing with Google Nest Doorbells via Starling Hubs. 
 
 To use, go to your Hubitat hub, Go to Developer tools / Apps Code / Add New App and paste and save this file
